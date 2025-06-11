@@ -1,0 +1,325 @@
+{
+  "name": "Notificador de Ausencias a RRHH",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5f7a0d57-46dc-4f64-bc41-bceba00bc3f6",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "notificado_a_rrhh",
+              "lookupValue": "=NO"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "d7ebe0e0-cd5b-44b4-9118-7bc9a474a359",
+      "name": "Leer info de usuario",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        220,
+        0
+      ],
+      "typeVersion": 4.5,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "schvartz.g@gmail.com",
+        "subject": "=Nueva Ausencia Registrada: {{ $json.nombre_completo }} (Legajo: {{ $json['legajo enviado'] }})",
+        "message": "=<h4>Nuevo Aviso de Ausencia Registrado</h4> <p>Se ha registrado una nueva ausencia a través del bot de Telegram.</p> <p><strong>Detalles del Empleado:</strong></p> <ul>     <li><strong>Nombre:</strong> {{ $json.nombre_completo }}</li>     <li><strong>Legajo:</strong> {{ $json['legajo enviado'] }}</li>     <li><strong>Legajo Confirmado:</strong> {{ $json['Legajo confirmado'] }}</li>     <li><strong>Motivo:</strong> {{ $json.motivo }}</li>     <li><strong>Certificado Presentado:</strong> {{ $json.certificado }}</li> </ul> <p><strong>Enlace al certificado (si aplica):</strong></p> <p><a href=\"{{ $json.Link_Certificado }}\">{{ $json.Link_Certificado }}</a></p> <p>Saludos,<br>Bot de Ausencias</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        0
+      ],
+      "id": "cb343212-2aba-406e-b64d-2d56b979cc11",
+      "name": "Gmail Envia correo a RH",
+      "webhookId": "856dbc2f-3472-4b35-a99b-cfc4d4ec64c3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SGUFyjutAnwdXEff",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Numero_Session": "={{ $('Leer info de usuario').item.json.Numero_Session }}",
+            "notificado_a_rrhh": "SI"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "88639afb-d7f7-47e8-b175-18bb1fdb014c",
+      "name": "Registra correo enviado",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        660,
+        0
+      ],
+      "typeVersion": 4.5,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Leer info de usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer info de usuario": {
+      "main": [
+        [
+          {
+            "node": "Gmail Envia correo a RH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Envia correo a RH": {
+      "main": [
+        [
+          {
+            "node": "Registra correo enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8fdad45f-d315-4187-a1d5-ce8eefc58cd2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c96ff4fa3ca113aca48c7ed6f6dc789abb40e93c01f8cf5a39c8fec44f01ed07"
+  },
+  "id": "OiTJ0EbTC4PtyAtb",
+  "tags": []
+}

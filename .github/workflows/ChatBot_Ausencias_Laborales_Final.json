@@ -1,0 +1,3961 @@
+{
+  "name": "ChatBot Ausencias Laborales Final",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# ChatBot de Inasistencias Laborales\n\n## Este sistema automatiza integralmente el registro y seguimiento de ausencias laborales mediante un ecosistema de workflows en n8n.\n\n### Funcionalidades Clave\n* **Interfaz Conversacional Intuitiva:** Guía a los empleados paso a paso vía Telegram, usando menús con botones para una experiencia clara y sencilla.\n* **Gestión de Múltiples Motivos:** Diferencia entre ausencias por Enfermedad, Nacimiento y Fallecimiento, adaptando la conversación y la documentación requerida para cada caso.\n* **Recolección y Validación de Datos:** Registra nombre completo y legajo, validando este último contra una base de datos de empleados en Google Sheets.\n* **Manejo Avanzado de Certificados:**\n    * Recepción de imágenes y documentos como certificados, actas de nacimiento/defunción.\n    * Validación de tamaño máximo de archivo y selección automática de imágenes en alta calidad.\n    * Almacenamiento seguro y organizado en una carpeta dedicada de Google Drive.\n    * Nomenclatura automática de archivos con formato `sesion_fecha_legajo`.\n* **Registro Centralizado:** Toda la información, incluyendo el enlace al certificado en Drive, se registra en una planilla de Google Sheets.\n\n### Ecosistema de Workflows\nEl sistema se compone de tres flujos de trabajo interconectados:\n1.  **ChatBot Ausencias Laborales Final:** El flujo principal que gestiona la interacción en tiempo real con el empleado.\n2.  **Notificador de Ausencias a RRHH:** Un flujo programado que revisa nuevos registros y envía notificaciones por email a RRHH.\n3.  **Manda Advertencia Falta Documentacion:** Un flujo \"despertador\" que alerta al empleado y a RRHH si el plazo de 24hs para presentar un certificado está por vencer.\n\n### Tecnologías Implementadas\n* n8n Cloud\n* Telegram Bot API\n* Google Sheets API\n* Google Drive API\n* Gmail API\n\n### Versión 2.0\n\n* **Nombre del Bot:** @Ausencias2Bot\n* **Planilla de Registros y Base de Datos:** [https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=sharing](https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=sharing)\n* **Carpeta de Certificados en Drive:** [https://drive.google.com/drive/folders/1wZQbZobyqgJvBf7yU-h9-AXKJSzocWqW?usp=drive_link](https://drive.google.com/drive/folders/1wZQbZobyqgJvBf7yU-h9-AXKJSzocWqW?usp=drive_link)",
+        "height": 1000,
+        "width": 960,
+        "color": 5
+      },
+      "id": "b9badf43-d8fe-47d3-8809-f7ad43b093f3",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3080,
+        -40
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Nueva Ausencia. Envia Botonera Motivos",
+        "height": 80,
+        "width": 700
+      },
+      "id": "4fe9b0f7-2897-4c4b-8b67-5496a4f8c112",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -620,
+        -120
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Registra nombre y pide legajo\n",
+        "height": 80,
+        "width": 580
+      },
+      "id": "59dda77d-b891-41e1-8427-9846ac183afc",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        520
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Registra legajo, compara legajo con base de datos, avisa estado de reclamo y pide documentacion segun motivo\n",
+        "height": 80,
+        "width": 1100
+      },
+      "id": "9c31ff88-41db-4924-a8a6-ec8f7e22d28f",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        860
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Tiene certificado y lo pide",
+        "height": 80,
+        "width": 880
+      },
+      "id": "deecd6b2-9c53-4ab0-8caa-b5ba240d237c",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -620,
+        1380
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## No tiene certificado y avisa que tiene 24 hs para entregarlo",
+        "height": 80,
+        "width": 860
+      },
+      "id": "88e19962-5560-4afe-b449-3987d565b7d4",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -620,
+        1680
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "9029c03c-ea60-4387-ba87-549cd068e2dc",
+      "name": "Obtiene Mensaje",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "position": [
+        -3060,
+        1120
+      ],
+      "webhookId": "e16c1cf6-ca07-407b-b887-f6788cdbacd4",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 207843712,
+          "mode": "list",
+          "cachedResultName": "Session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=207843712"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "STATE",
+              "lookupValue": "current"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "b4009ad1-b8cb-41f2-9032-ee565cd92e8c",
+      "name": "Obtiene sesion",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -2640,
+        1120
+      ],
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 207843712,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MCJLAqKP0Y7Qr68ZYoSSBeEVyKI1QgAAZnlEiyqkzXo/edit#gid=207843712",
+          "cachedResultName": "Session"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "STATE": "expire",
+            "SESSION": "={{ $('Obtiene sesion').item.json.SESSION }}"
+          },
+          "matchingColumns": [
+            "SESSION"
+          ],
+          "schema": [
+            {
+              "id": "SESSION",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "SESSION",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "STATE",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "STATE",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1ad52bba-4217-4edd-90a3-a3328fa94794",
+      "name": "Deshabilita sesion anterior",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -620,
+        280
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 207843712,
+          "mode": "list",
+          "cachedResultName": "Session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=207843712"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SESSION": "={{ $('Obtiene Mensaje').item.json.update_id }}",
+            "STATE": "={{ $('Obtiene sesion').item.json.STATE }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "SESSION",
+              "displayName": "SESSION",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "STATE",
+              "displayName": "STATE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b4b5993e-7a10-47a5-95be-f0092a744960",
+      "name": "Crea nueva sesion",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -360,
+        280
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telegram_id": "={{ $('Obtiene Mensaje').item.json.message.from.id }}",
+            "telegram_first_name": "={{ $('Obtiene Mensaje').item.json.message.from.first_name }}",
+            "telegram_last_name": "={{ $('Obtiene Mensaje').item.json.message.from.last_name }}",
+            "telegram_language": "={{ $('Obtiene Mensaje').item.json.message.from.language_code }}",
+            "fecha_registro": "={{ $('Obtiene Mensaje').item.json.message.date }}",
+            "nombre_completo": "={{ $('Obtiene Mensaje').item.json.message.text }}",
+            "Numero_Session": "={{ $('Obtiene sesion').item.json.SESSION }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2e7d65e0-a77a-4310-a689-6fce4d0bd6be",
+      "name": "Registra Nombre",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -560,
+        660
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.from.id }}",
+        "text": "=👍 <b>Gracias, {{ $json.nombre_completo }}.</b>  \n\nAhora necesito tu número de legajo para continuar con el registro de tu ausencia.  \n\n<b>¿Cuál es tu número de legajo?</b>\n",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "2dea8fa9-c9c4-40dd-88db-8123b1d441fe",
+      "name": "Pide legajo",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        -340,
+        660
+      ],
+      "webhookId": "5bb490ea-1bc9-4448-b660-dc046488f93f",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "legajo enviado": "={{ $('Obtiene Mensaje').item.json.message.text }}",
+            "Numero_Session": "={{ $('Switch Boton Motivo, Texto, Documento o Imagen').item.json.SESSION }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b75331a6-089a-4d6f-880f-c51dedff157c",
+      "name": "Registra Legajo",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -600,
+        1100
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1682952596,
+          "mode": "list",
+          "cachedResultName": "Base de Datos de empleados(Mock)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=1682952596"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Numero de Legajo",
+              "lookupValue": "={{ $json['legajo enviado'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "32348459-67c9-4376-8e0c-399c929fd4ab",
+      "name": "Lee base de datos y compara Legajo",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -380,
+        1100
+      ],
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Legajo confirmado": "=OK",
+            "Numero_Session": "={{ $('Obtiene sesion').item.json.SESSION }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "6daada52-72c1-4734-bce7-0ea720642e48",
+      "name": "Registra Confirmacion Legajo",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        20,
+        980
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=✅ <b>Perfecto. Ahora enviá una foto o archivo PDF del certificado médico.</b>  \n\n📎 Podés enviar:  \n- Foto del certificado  \n- Archivo PDF  \n- Imagen escaneada  \n\nUna vez que reciba el certificado, tu ausencia quedará registrada completamente.  \n<b><i>Recordá que el médico laboral podría concurrir a tu domicilio durante la jornada.</i></b>\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -360,
+        1500
+      ],
+      "id": "d4e1399d-78f2-402d-8733-ed80b7a1f2bb",
+      "name": "Pide adjuntar certificado",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "certificado": "=NOK. RECORDAR EN 22 HS",
+            "Numero_Session": "={{ $('Obtiene sesion').item.json.SESSION }}",
+            "notificado_a_rrhh": "NO"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2ef475c6-62c6-4a77-9cf6-89196cd1f550",
+      "name": "Registra Certificado NOK",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -600,
+        1800
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verificar si es texto\nif ($json.message && $json.message.text) {\n  // Formatear texto: minúsculas, trim, normalizar espacios\n  const textoFormateado = $json.message.text\n    .toLowerCase()\n    .trim()\n    .replace(/\\s+/g, ' '); // Múltiples espacios → un espacio\n  \n  // Crear nuevo objeto con texto formateado\n  return {\n    ...$json,\n    message: {\n      ...$json.message,\n      text: textoFormateado\n    }\n  };\n}\n\n// Si no es texto, devolver sin cambios\nreturn $json;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2840,
+        1120
+      ],
+      "id": "a74bead0-35f7-4cd3-aa2f-6f74f4320d2e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/bot8051002066:AAHP7iOF1Sgy-POa7xQWCQyUlRByWbPRkHY/{{ $json.ruta_para_descarga }}",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1040,
+        1880
+      ],
+      "id": "ccc3b956-2900-4d5a-9e4d-e401a2f8b7d4",
+      "name": "Descargar archivo"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot8051002066:AAHP7iOF1Sgy-POa7xQWCQyUlRByWbPRkHY/getFile?file_id={{ $('Code').item.json.message.photo[3].file_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1920,
+        1900
+      ],
+      "id": "e2ba49c2-86dc-476a-83d1-cfa162663f39",
+      "name": "HTTP Obtener Info de la imagen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aa9ef0dd-5f19-4279-b922-936e9bed278b",
+              "leftValue": "={{ $json['Nombre y Apellido'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -180,
+        1100
+      ],
+      "id": "32ae6203-bff7-49e6-a657-f72ee7741594",
+      "name": "Verificacion Legajo"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Legajo confirmado": "=NOK. REVISAR ",
+            "Numero_Session": "={{ $('Registra Legajo').item.json.Numero_Session }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e0204e5d-a042-4c64-890b-b0919cf2f5cc",
+      "name": "Registra Falta de Legajo y Alerta RH",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        20,
+        1200
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=❗ <b>No he reconocido tu respuesta.</b>  \nPor favor, utilizá este chat únicamente para gestionar tu ausencia laboral.  \nTu colaboración nos ayuda a mantener el proceso ágil y eficiente.\n",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "abfa59f8-f8d1-401c-845f-9a7929e611a0",
+      "name": "Salida Default (pide clarificacion)",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        -1080,
+        1340
+      ],
+      "webhookId": "d1b0b32c-f317-4404-8542-1f08c9fe1c71",
+      "typeVersion": 1.2,
+      "executeOnce": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Numero_Session",
+              "lookupValue": "={{ $('Registra Certificado NOK').item.json.Numero_Session }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "bb0ee825-acc8-404c-856e-a0705c7b0135",
+      "name": "Leer info de usuario",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -140,
+        1800
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 141315669,
+          "mode": "list",
+          "cachedResultName": "Recordatorios_Pendientes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=141315669"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha_limite_24h": "={{ new Date(new Date().getTime() + (24 * 60 * 60 * 1000)).toISOString() }}",
+            "nombre_empleado": "= {{ $json.nombre_completo }}",
+            "Numero_Session": "={{ $json.Numero_Session }}",
+            "chat_id": "={{ $json.telegram_id }}",
+            "recordatorio_enviado": "NO"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha_limite_24h",
+              "displayName": "fecha_limite_24h",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recordatorio_enviado",
+              "displayName": "recordatorio_enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre_empleado",
+              "displayName": "nombre_empleado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8cd12eef-009a-4aa5-8831-8226ceef8dd7",
+      "name": "Registra Aviso de Alerta",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        80,
+        1800
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "955f3c39-0732-4a63-b3f7-70ab0753a68a",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "leftValue": "={{ $('Code').item.json.message.text }}",
+                    "rightValue": "(enfe|ausen|inasistencia|licencia|no voy|aucen|naci|nasi|falle|mur|muer|beb|dec|fami)"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Nueva ausencia"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1be9086c-0490-4b07-ba1f-6e103a995fb6",
+                    "leftValue": "={{ $('Code').item.json.message.text }}",
+                    "rightValue": "^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+\\s+[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]*$",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Registra nombre y pide legajo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "29983a09-0cf3-45f7-9f3b-815638ad1363",
+                    "leftValue": "={{ $('Code').item.json.message.text }}",
+                    "rightValue": "^[0-9]{5}$",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Registra Legajo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a7d593f3-4553-456c-9091-ae21ded34152",
+                    "leftValue": "={{ $('Code').item.json.message.text }}",
+                    "rightValue": "si",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Con Certificado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b2482fb3-b169-404e-aea0-68d1c67be3fb",
+                    "leftValue": "={{ $('Code').item.json.message.text }}",
+                    "rightValue": "no",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sin Certificado"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "allMatchingOutputs": false
+        }
+      },
+      "id": "03f3b3d6-ea09-459b-98eb-7f443c6144a2",
+      "name": "Switch de texto",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -1240,
+        980
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.nombre_de_archivo_final }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1wZQbZobyqgJvBf7yU-h9-AXKJSzocWqW",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -640,
+        2220
+      ],
+      "id": "d6f0f827-c3c1-4ee1-b55d-6253f3a48bb5",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pAMpRsUdEWR63D2A",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Numero_Session",
+              "lookupValue": "={{ $('Obtiene sesion').item.json.SESSION }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "3e25f976-f87b-40c2-ac33-7052419b61f1",
+      "name": "Leer datos de inasistencia",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1380,
+        1880
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Numero_Session": "={{ $('Leer datos de inasistencia').item.json.Numero_Session }}",
+            "certificado": "OK",
+            "notificado_a_rrhh": "NO"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1130b896-cbe3-4ddf-9379-97c346cc077b",
+      "name": "Registra recepcion de certificado",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -460,
+        2220
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ffe94236-3058-43ed-907f-470904a13ee6",
+              "leftValue": "={{ $json.certificado }}",
+              "rightValue": "OK",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "5aa832e9-8d69-410d-b630-5fcc56a11d44",
+              "leftValue": "={{ $('Leer datos de inasistencia').item.json['Legajo confirmado'] }}",
+              "rightValue": "si",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -260,
+        2220
+      ],
+      "id": "e1f36881-82da-478d-b186-c0ff89d7708e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=✅ <b>Trámite completado con éxito.</b>  \nHemos recibido y registrado tu certificado.  \nTu número de confirmación final es: <b><code>OK-{{ $('Registra recepcion de certificado').item.json.Numero_Session }}</code></b>  \n<b><i>Recordá que el médico laboral podría concurrir a tu domicilio durante la jornada.</i></b>\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        2220
+      ],
+      "id": "aa2ab370-8ede-4d7c-9f71-1f4823efb291",
+      "name": "Envio Mensaje Tramite OK",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=✅ <b>Hemos recibido y registrado tu certificado.</b>\nTu número de registro provisional es: <b>🔶 Número de registro:</b> <code>PROV-{{$('Registra recepcion de certificado').item.json.Numero_Session}}</code>\n\nRecursos Humanos revisará tu caso a la brevedad.\n<b><i>Recordá que el médico laboral podría concurrir a tu domicilio durante la jornada.</i></b>\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        2440
+      ],
+      "id": "d4f0e4df-04e9-4423-90d5-48e36a90409b",
+      "name": "Envio Mensaje Tramite Provisorio OK",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5f4b67c1-2b9f-404a-a660-72014f92e415",
+              "leftValue": "={{ $json.result.file_size }}",
+              "rightValue": 5242880,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1600,
+        1900
+      ],
+      "id": "f9ae5135-210b-4115-a418-8893a54b0c20",
+      "name": "Verificacion de tamaño de archivo"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=⚠️ <b>El archivo que enviaste es demasiado grande.</b>  \nPor favor, enviá un archivo de menos de 5 MB.\n",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "a792baac-a679-44ef-9489-ee414c1dd1dd",
+      "name": "Pide un archivo mas pequeño",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        -1580,
+        2080
+      ],
+      "webhookId": "d1b0b32c-f317-4404-8542-1f08c9fe1c71",
+      "typeVersion": 1.2,
+      "executeOnce": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Define la variable 'item' usando los datos del nodo \"Leer datos de inasistencia\".\n//    Reemplaza 'Leer datos de inasistencia' si tu nodo se llama diferente.\nconst item = $items('Leer datos de inasistencia')[0].json;\n\n// 2. Obtenemos la fecha actual y la formateamos como AAAA-MM-DD.\nconst fecha = new Date().toISOString().split('T')[0];\n\n// 3. Variable para guardar la ruta del archivo que encontremos.\nlet filePath = '';\n\n// 4. Intentamos obtener la ruta del nodo de información de ARCHIVOS.\n//    Reemplaza 'HTTP Obtener Info del archivo' si tu nodo tiene un nombre diferente.\ntry {\n    const infoArchivoDocArray = $items('HTTP Obtener Info del documento');\n    if (infoArchivoDocArray.length > 0 && infoArchivoDocArray[0].json.result && infoArchivoDocArray[0].json.result.file_path) {\n        filePath = infoArchivoDocArray[0].json.result.file_path;\n    }\n} catch (e) {\n    // Error esperado si el nodo no se ejecutó (porque se envió una imagen).\n}\n\n// 5. Si no encontramos la ruta en el nodo de archivos, la buscamos en el de IMÁGENES.\nif (!filePath) {\n    try {\n        // Reemplaza 'HTTP Obtener Info de la imagen' si tu nodo tiene un nombre diferente.\n        const infoArchivoImgArray = $items('HTTP Obtener Info de la imagen');\n        if (infoArchivoImgArray.length > 0 && infoArchivoImgArray[0].json.result && infoArchivoImgArray[0].json.result.file_path) {\n            filePath = infoArchivoImgArray[0].json.result.file_path;\n        }\n    } catch (e) {\n        // Error esperado si el nodo no se ejecutó (porque se envió un documento).\n    }\n}\n\n// 6. Verificamos si 'item' se definió correctamente antes de usarlo.\nif (item && typeof item === 'object') {\n    item.ruta_para_descarga = filePath;\n\n    // 7. Obtenemos la extensión del archivo de forma segura.\n    const extension = filePath ? filePath.split('.').pop() : '';\n\n    // 8. Construimos el nombre final del archivo.\n    //    Asegúrate de que 'Numero_Session' y 'legajo enviado' existan en 'item'.\n    item.nombre_de_archivo_final = `${item.Numero_Session}_${fecha}_${item['legajo enviado']}.${extension}`;\n} else {\n    // Si 'item' no es un objeto válido, devolvemos un error claro.\n    return { error: \"No se pudieron obtener los datos del nodo 'Leer datos de inasistencia'. Revisa su salida.\" };\n}\n\n// 9. Devolvemos el item con los nuevos campos.\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1220,
+        1880
+      ],
+      "id": "bc8d0992-7618-4faf-a849-27cbdbcae5c1",
+      "name": "Preparar info de Descarga"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot8051002066:AAHP7iOF1Sgy-POa7xQWCQyUlRByWbPRkHY/getFile?file_id={{ $('Obtiene Mensaje').item.json.message.document.file_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1760,
+        1800
+      ],
+      "id": "f36ab28e-17cf-4e11-9f1d-72398a657e3d",
+      "name": "HTTP Obtener Info del documento"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "79de5578-59e1-43ac-861a-6a18f2881766",
+                    "leftValue": "={{ $('Code').item.json.callback_query.data }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Respuesta_Boton"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Code').item.json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "6e057873-913c-458f-ab65-0f86c6ae7af6"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c96a70de-c6fb-430a-9d24-c6b9dad034d0",
+                    "leftValue": "={{ $('Obtiene Mensaje').item.json.message.document }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Archivo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "80f88db8-a4cc-480c-aa39-195ed131fcaa",
+                    "leftValue": "={{ $('Obtiene Mensaje').item.json.message.photo[0].file_unique_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Imagen"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1700,
+        1120
+      ],
+      "id": "2dda7307-a1b8-4aef-9a51-79327f5d262b",
+      "name": "Switch Boton Motivo, Texto, Documento o Imagen"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Code').item.json.callback_query.data }}",
+                    "rightValue": "motivo_enfermedad",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c0104468-7e61-4b5e-a78d-f2076d106e52"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ausencia_Enfermedad"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bc929d06-ba93-4600-8ae1-dd2bbf633c5c",
+                    "leftValue": "={{ $('Obtiene Mensaje').item.json.callback_query.data }}",
+                    "rightValue": "motivo_fallecimiento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ausencia_Fallecimiento"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ff07624a-790c-4a47-a475-4312a3437273",
+                    "leftValue": "={{ $('Obtiene Mensaje').item.json.callback_query.data }}",
+                    "rightValue": "motivo_nacimiento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ausencia_Nacimiento"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1520,
+        880
+      ],
+      "id": "d9c09c68-35de-4744-9c95-97858b0b92db",
+      "name": "Respuesta Botonera inicial"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=👋 <b>Hola, soy el Asistente de Ausencias.</b>  \n\nEntiendo que necesitás reportar una ausencia.  \nPor favor, seleccioná el motivo correspondiente:\n",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "Enfermedad / Familiar Enfermo",
+                    "additionalFields": {
+                      "callback_data": "motivo_enfermedad"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "Fallecimiento",
+                    "additionalFields": {
+                      "callback_data": "motivo_fallecimiento"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "Nacimiento",
+                    "additionalFields": {
+                      "callback_data": "motivo_nacimiento"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "0a9c3fe0-c180-4fbc-83af-56064fb4037a",
+      "name": "Seleccion de Motivos",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        -600,
+        0
+      ],
+      "webhookId": "d1b0b32c-f317-4404-8542-1f08c9fe1c71",
+      "typeVersion": 1.2,
+      "executeOnce": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Deshabilita sesion anterior, Crea Sesion Nueva, Pide Nombre y Registra Motivo Ausencia\n",
+        "height": 80,
+        "width": 900
+      },
+      "id": "2ccdcab5-6e78-416b-bb70-d6c4bbe58136",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -620,
+        160
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.callback_query.from.id }}",
+        "text": "=🤖 <b>Voy a ayudarte con el registro de tu ausencia laboral.</b>  \n\nPara continuar, necesito algunos datos.  \n\n<b>¿Cuál es tu nombre completo?</b>\n",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "50443205-8d4b-4e0e-8bf8-33e0e1d1fd21",
+      "name": "Pide nombre1",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        -120,
+        280
+      ],
+      "webhookId": "d1b0b32c-f317-4404-8542-1f08c9fe1c71",
+      "typeVersion": 1.2,
+      "executeOnce": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=⚠️ <b>IMPORTANTE - AVISO OFICIAL</b>  \n\nTu ausencia ha sido registrada, pero aún no hemos recibido el certificado médico.  \n\n🚨 <b>PLAZO MÁXIMO: 24 HORAS</b>  \n\nTenés tiempo hasta mañana a esta misma hora para enviar el certificado médico a Recursos Humanos. De no hacerlo, la ausencia podría ser considerada injustificada.  \n\nContactá con RRHH si tenés dudas.  \n<b><i>Recordá que el médico laboral podría concurrir a tu domicilio durante la jornada.</i></b>\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -360,
+        1800
+      ],
+      "id": "84c6e943-1284-4221-b139-304b22e58839",
+      "name": "Pide adjuntar certificado2",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Manejo de archivos ",
+        "height": 80,
+        "width": 880
+      },
+      "id": "940540d7-f134-43c4-8687-10616e83e74d",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1780,
+        1660
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Guarda Certificado en Google Drive, actualiza registro y manda mensaje tramite completo.",
+        "height": 80,
+        "width": 980
+      },
+      "id": "72c47de4-1cb2-4bff-ba2c-8e47e753ea4c",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        2060
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Numero_Session": "={{ $('Crea nueva sesion').item.json.SESSION }}",
+            "motivo ": "={{ $('Obtiene Mensaje').item.json.callback_query.data }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "cce4e611-53af-495d-81ae-1aa0c216e720",
+      "name": "Registra Motivo",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        80,
+        280
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "= {{ $json['motivo '] }}",
+                    "rightValue": "= motivo_enfermedad",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "71fd0a26-dd6b-4c88-bb25-8fbc9a7c81b8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pide_certificado_medico"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2fa92d35-07c2-4b8d-8e84-84aaf83b8c80",
+                    "leftValue": "={{ $json['motivo '] }}",
+                    "rightValue": "motivo_nacimiento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pide_certificado_nacimiento"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f0d92d4e-f7e4-48af-9c38-5f7f4bd0afc8",
+                    "leftValue": "={{ $json['motivo '] }}",
+                    "rightValue": "motivo_fallecimiento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pide_certificado_defuncion"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        440,
+        1080
+      ],
+      "id": "f94a7f96-dc00-4682-9e89-e4cc56055f21",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Numero_Session",
+              "lookupValue": "={{ $('Registra Legajo').item.json.Numero_Session }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "a7a27fef-5d2f-41a6-9cda-55cfd8f58e92",
+      "name": "Leer info de usuario1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        220,
+        1080
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2fc9a687-26fb-4c1b-9c10-22a52c55d78a",
+              "leftValue": "={{ $json['Legajo confirmado'] }}",
+              "rightValue": "OK",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        720
+      ],
+      "id": "75fad59e-2442-4ab2-8c73-9900dfdb1f03",
+      "name": "If Enfermedad"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ad40ce89-a53e-428e-ad7e-12a2d24bc6fa",
+              "leftValue": "={{ $('Leer info de usuario1').item.json['Legajo confirmado'] }}",
+              "rightValue": "OK",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        1080
+      ],
+      "id": "4b476eba-7201-4671-97eb-0289dab49800",
+      "name": "If Nacimiento"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=✅ <b>Perfecto. Tu número de legajo fue confirmado correctamente.</b>  \n\n¿Tenés certificado médico por tu ausencia?  \n<b>Respondé: Sí o No</b>\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        640
+      ],
+      "id": "81c4c305-c953-48b7-8211-5c4f772a3ea6",
+      "name": "Legajo OK y Pregunta por certificado medico",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=⚠️ <b>Atención: tu legajo no figura en nuestra base de datos.</b>  \n\n📋 Tu aviso de ausencia será revisado por el departamento de Recursos Humanos.  \n\n📝 Se te asignará un código de registro provisional una vez que completemos todos los datos.  \n\n¿Tenés certificado médico por tu ausencia?  \n<b>Respondé: Sí o No</b>\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        840
+      ],
+      "id": "82787343-8dfe-44e4-a257-71c1f0865e42",
+      "name": "Legajo NOK y Pregunta por certificado medico",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=🎉 <b>¡Felicitaciones!</b>  \nPara registrar el evento, por favor, enviá una foto o un archivo PDF del acta de nacimiento.\n\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        1060
+      ],
+      "id": "6ad98f96-3768-450c-a396-6fdf8959ec14",
+      "name": "Legajo OK y Pregunta por Partida Nacimiento",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=🎉 <b>¡Felicitaciones!</b>  \nPara registrar el evento, por favor, enviá una foto o un archivo PDF del acta de nacimiento.\n\n⚠️ <b>Atención: tu legajo no figura en nuestra base de datos.</b>  \n\n📋 Tu aviso de ausencia será revisado por el departamento de Recursos Humanos.  \n\n📝 Se te asignará un código de registro provisional una vez que completemos todos los datos.\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        1260
+      ],
+      "id": "18d6ed5d-58f2-4a9c-b108-2b221f586b89",
+      "name": "Legajo NOK y Pregunta por Partida Nacimiento",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=✅ <b>Entendido.</b>  \nPara continuar, por favor, enviá una foto o un archivo PDF del acta de defunción.\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        1480
+      ],
+      "id": "a2d7000a-91d0-4fa9-9209-e313b347610f",
+      "name": "Legajo OK y Pregunta por certificado Defuncion",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtiene Mensaje').item.json.message.chat.id }}",
+        "text": "=✅ <b>Entendido.</b>  \nPara continuar, por favor, enviá una foto o un archivo PDF del acta de defunción.\n\n⚠️ <b>Atención: tu legajo no figura en nuestra base de datos.</b>  \n\n📋 Tu aviso de ausencia será revisado por el departamento de Recursos Humanos.  \n\n📝 Se te asignará un código de registro provisional una vez que completemos todos los datos.\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        1700
+      ],
+      "id": "0ade0f6f-3044-4746-a0c3-cb197419e65f",
+      "name": "Legajo NOK y Pregunta por certificado Defuncion",
+      "webhookId": "b0d2832c-ae3e-4220-a144-2bf976cb9d9b",
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ad40ce89-a53e-428e-ad7e-12a2d24bc6fa",
+              "leftValue": "={{ $('Leer info de usuario1').item.json['Legajo confirmado'] }}",
+              "rightValue": "OK",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        1540
+      ],
+      "id": "9bca467f-deab-4397-a33b-ca0809b44620",
+      "name": "if Fallecimiento"
+    },
+    {
+      "parameters": {
+        "content": "## Manda Mensaje personalizado segun motivo y estado\n",
+        "height": 80,
+        "width": 580
+      },
+      "id": "537fdd31-63f4-41d5-ba43-d3b81fd7bb41",
+      "name": "Sticky Note9",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        500
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "certificado": "=Si",
+            "Numero_Session": "={{ $('Obtiene sesion').item.json.SESSION }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo",
+              "displayName": "motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fue_medico",
+              "displayName": "fue_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "06da9e08-0eee-46b5-b87d-133161c12299",
+      "name": "Registra que tiene Certificado",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -600,
+        1500
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "53bb4296-11be-4342-8d77-3089dbf00b1f",
+              "leftValue": "={{ $json.STATE }}",
+              "rightValue": "current",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2440,
+        1120
+      ],
+      "id": "049c7197-4800-486d-bbfd-6b792a18736e",
+      "name": "Sesion activa encontrada?"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 207843712,
+          "mode": "list",
+          "cachedResultName": "Session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=207843712"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SESSION": "={{ $('Obtiene Mensaje').item.json.update_id }}",
+            "STATE": "=current"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "SESSION",
+              "displayName": "SESSION",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "STATE",
+              "displayName": "STATE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8251896b-956b-4ab4-b2be-a707d6c54737",
+      "name": "Crea nueva sesion1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -2200,
+        1220
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Obtiene Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtiene sesion": {
+      "main": [
+        [
+          {
+            "node": "Sesion activa encontrada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deshabilita sesion anterior": {
+      "main": [
+        [
+          {
+            "node": "Crea nueva sesion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crea nueva sesion": {
+      "main": [
+        [
+          {
+            "node": "Pide nombre1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra Nombre": {
+      "main": [
+        [
+          {
+            "node": "Pide legajo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra Legajo": {
+      "main": [
+        [
+          {
+            "node": "Lee base de datos y compara Legajo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lee base de datos y compara Legajo": {
+      "main": [
+        [
+          {
+            "node": "Verificacion Legajo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra Confirmacion Legajo": {
+      "main": [
+        [
+          {
+            "node": "Leer info de usuario1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra Certificado NOK": {
+      "main": [
+        [
+          {
+            "node": "Pide adjuntar certificado2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Obtiene sesion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar archivo": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Obtener Info de la imagen": {
+      "main": [
+        [
+          {
+            "node": "Verificacion de tamaño de archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificacion Legajo": {
+      "main": [
+        [
+          {
+            "node": "Registra Confirmacion Legajo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registra Falta de Legajo y Alerta RH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra Falta de Legajo y Alerta RH": {
+      "main": [
+        [
+          {
+            "node": "Leer info de usuario1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer info de usuario": {
+      "main": [
+        [
+          {
+            "node": "Registra Aviso de Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch de texto": {
+      "main": [
+        [
+          {
+            "node": "Seleccion de Motivos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registra Nombre",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registra Legajo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registra que tiene Certificado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registra Certificado NOK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Salida Default (pide clarificacion)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer datos de inasistencia": {
+      "main": [
+        [
+          {
+            "node": "Preparar info de Descarga",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Registra recepcion de certificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra recepcion de certificado": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Envio Mensaje Tramite OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envio Mensaje Tramite Provisorio OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificacion de tamaño de archivo": {
+      "main": [
+        [
+          {
+            "node": "Leer datos de inasistencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pide un archivo mas pequeño",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar info de Descarga": {
+      "main": [
+        [
+          {
+            "node": "Descargar archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Obtener Info del documento": {
+      "main": [
+        [
+          {
+            "node": "Verificacion de tamaño de archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Boton Motivo, Texto, Documento o Imagen": {
+      "main": [
+        [
+          {
+            "node": "Respuesta Botonera inicial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch de texto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Obtener Info del documento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Obtener Info de la imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta Botonera inicial": {
+      "main": [
+        [
+          {
+            "node": "Deshabilita sesion anterior",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deshabilita sesion anterior",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deshabilita sesion anterior",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pide adjuntar certificado2": {
+      "main": [
+        [
+          {
+            "node": "Leer info de usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pide nombre1": {
+      "main": [
+        [
+          {
+            "node": "Registra Motivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer info de usuario1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "If Enfermedad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If Nacimiento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "if Fallecimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enfermedad": {
+      "main": [
+        [
+          {
+            "node": "Legajo OK y Pregunta por certificado medico",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Legajo NOK y Pregunta por certificado medico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Nacimiento": {
+      "main": [
+        [
+          {
+            "node": "Legajo OK y Pregunta por Partida Nacimiento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Legajo NOK y Pregunta por Partida Nacimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Legajo NOK y Pregunta por certificado medico": {
+      "main": [
+        []
+      ]
+    },
+    "if Fallecimiento": {
+      "main": [
+        [
+          {
+            "node": "Legajo OK y Pregunta por certificado Defuncion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Legajo NOK y Pregunta por certificado Defuncion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra que tiene Certificado": {
+      "main": [
+        [
+          {
+            "node": "Pide adjuntar certificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sesion activa encontrada?": {
+      "main": [
+        [
+          {
+            "node": "Switch Boton Motivo, Texto, Documento o Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crea nueva sesion1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crea nueva sesion1": {
+      "main": [
+        [
+          {
+            "node": "Switch Boton Motivo, Texto, Documento o Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9766369d-fe1c-4b9f-9349-5bdbe4ea53c0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c96ff4fa3ca113aca48c7ed6f6dc789abb40e93c01f8cf5a39c8fec44f01ed07"
+  },
+  "id": "XxqbozMiiDmtFCyx",
+  "tags": []
+}
