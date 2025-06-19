@@ -1,0 +1,307 @@
+{
+  "name": "Manda Advertencias Falta Documentacion",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "dc4dec7d-c4fd-44b2-8d21-5663fe4b3fa1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 141315669,
+          "mode": "list",
+          "cachedResultName": "Recordatorios_Pendientes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=141315669"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "recordatorio_enviado",
+              "lookupValue": "=NO"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "72d57132-d2bf-4028-87b1-965213c574fc",
+      "name": "Leer info de usuario",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        220,
+        0
+      ],
+      "typeVersion": 4.5,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dc7ffa77-a2b1-4c12-854a-a0194217f878",
+              "leftValue": "={{ $json.hora_del_recordatorio_py }}",
+              "rightValue": "={{ $json.hora_actual_py }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "beforeOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        680,
+        0
+      ],
+      "id": "2bd9a2e4-5cfe-499e-b3b1-380cb61ba245",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Copyright (c) 2025 Gastón Ariel Schvartz\n# Licenciado bajo la Licencia MIT. Ver el archivo LICENSE para más detalles.\nfrom datetime import datetime, timedelta, timezone\n\n# Asumiendo que el item de entrada está disponible\nitem = items[0]['json']\n\n# 1. Convertimos el texto de la fecha límite a un objeto de fecha en Python\n#    Reemplazamos la 'Z' para que sea compatible con todas las versiones de Python\nfecha_limite_str = item['fecha_limite_24h'].replace('Z', '+00:00')\nfecha_limite = datetime.fromisoformat(fecha_limite_str)\n\n# 2. Calculamos la hora del recordatorio (límite - 2 horas)\n#    Usamos timedelta para restar tiempo\nhora_del_recordatorio = fecha_limite - timedelta(hours=2)\n\n# 3. Obtenemos la hora actual en UTC para una comparación correcta\nhora_actual = datetime.now(timezone.utc)\n\n# 4. Añadimos los nuevos valores al item en formato de texto estándar\nitem['hora_del_recordatorio_py'] = hora_del_recordatorio.isoformat()\nitem['hora_actual_py'] = hora_actual.isoformat()\n\n# 5. Devolvemos el item modificado\nreturn item"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "697e7922-8e15-46c2-b9bc-11c6af53c08a",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 141315669,
+          "mode": "list",
+          "cachedResultName": "Recordatorios_Pendientes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=141315669"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.telegram_id }}",
+            "recordatorio_enviado": "AVISADO"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha_limite_24h",
+              "displayName": "fecha_limite_24h",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "recordatorio_enviado",
+              "displayName": "recordatorio_enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre_empleado",
+              "displayName": "nombre_empleado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4a3e2dd3-6341-4072-bee2-860a97796467",
+      "name": "Actualiza Aviso de Alerta",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1260,
+        -20
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "= {{ $json.chat_id }} ",
+        "text": "=¡Atención, {{ $json.nombre_empleado }}! Este es un recordatorio automático. Tu plazo para presentar el certificado médico vence en aproximadamente 2 horas. De no recibirlo, tu ausencia podría ser considerada injustificada y estar sujeta a sanción.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "631906e0-1711-4e2d-8889-858857839795",
+      "name": "Advertencia 2 Horas Fecha Limite",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        1000,
+        -20
+      ],
+      "webhookId": "5bb490ea-1bc9-4448-b660-dc046488f93f",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "GUZAvPoqdYxGQYIW",
+          "name": "Ausencias2Bot"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Leer info de usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer info de usuario": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Advertencia 2 Horas Fecha Limite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advertencia 2 Horas Fecha Limite": {
+      "main": [
+        [
+          {
+            "node": "Actualiza Aviso de Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d2dac9a7-341a-4133-b86e-c72380d09214",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c96ff4fa3ca113aca48c7ed6f6dc789abb40e93c01f8cf5a39c8fec44f01ed07"
+  },
+  "id": "PAQsfYuodw6uAkYu",
+  "tags": []
+}

@@ -1,0 +1,1222 @@
+{
+  "name": "Procesador y Verificador de Certificados (OCR)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1wZQbZobyqgJvBf7yU-h9-AXKJSzocWqW",
+          "mode": "list",
+          "cachedResultName": "Certificados",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1wZQbZobyqgJvBf7yU-h9-AXKJSzocWqW"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "all"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        0
+      ],
+      "id": "05afbb51-5fb4-4716-9073-ba158975e6b9",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pAMpRsUdEWR63D2A",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// El trigger de Drive nos da el nombre del archivo en el campo 'name'\nconst fileName = $json.name;\n\n// Dividimos el nombre del archivo por el guion bajo '_'\nconst parts = fileName.split('_');\n\n// La primera parte es el ID de sesión que necesitamos\nconst sessionId = parts[0];\n\n// Devolvemos todos los datos que ya teníamos del trigger\n// y añadimos nuestro nuevo campo 'sessionId' para usarlo en el siguiente paso\nreturn {\n  ...$json,\n  sessionId: sessionId\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -60,
+        0
+      ],
+      "id": "7cf3c6a5-1e09-4eaa-8e89-28800124a94b",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Numero_Session",
+              "lookupValue": "={{ $('Code').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "42e80021-72fd-4e63-b811-3b66919f7ad7",
+      "name": "Leer info de usuario1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        160,
+        0
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## ROL Y OBJETIVO\nEres un asistente experto de RRHH. Tu única función es analizar el siguiente texto, que fue extraído de un certificado médico, y estructurar la información clave en un JSON.\n\n## CONTEXTO DEL EMPLEADO\n- Nombre Registrado: {{ $('Leer info de usuario1').item.json.nombre_completo }}\n- Legajo: {{ $('Leer info de usuario1').item.json['legajo enviado'] }}\n\n## TEXTO EXTRAÍDO DEL CERTIFICADO{{ $json.text }}\n\n\n## TAREA\nDel \"TEXTO EXTRAÍDO\", encuentra y devuelve un JSON con la siguiente estructura:\n{\n  \"datos_extraidos\": {\n    \"nombre_paciente\": \"...\",\n    \"dias_reposo\": 0,\n    ...etc\n  },\n  \"validacion\": { ... }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        2500,
+        -240
+      ],
+      "id": "9ac0f72a-ae4f-4125-9884-4f0b1d314657",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-04-17",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2520,
+        -380
+      ],
+      "id": "846a7d07-8dbe-4d15-98eb-de0b194599bb",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "AeC0JLKPkafL1bSx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "notes": "Eres un asistente experto de RRHH para la empresa Tecnomil, especializado en la verificación de certificados médicos. Tu tarea es analizar la imagen de un certificado que te proporcionaré y extraer información específica de manera precisa.\n"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Google Drive Trigger').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        380,
+        0
+      ],
+      "id": "d63a9e11-528b-4afb-aeff-0a4b9e95e0b3",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pAMpRsUdEWR63D2A",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        2300,
+        -240
+      ],
+      "id": "4339611b-5c1e-4b85-8442-cb7c309e9e1e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Tomamos el item que entra al nodo (la salida del nodo anterior).\nconst item = items[0];\n\n// 2. Accedemos al texto que contiene el string JSON (la salida de la IA).\nconst jsonString = item.json.text;\n\n// 3. LIMPIEZA: A veces la IA devuelve el JSON dentro de un bloque de código.\n// Esta línea elimina los ```json y ``` del principio y del final, si existen.\n// También quita espacios en blanco al inicio y al final con .trim().\nconst cleanedString = jsonString.replace(/^```json\\n/, '').replace(/\\n```$/, '').trim();\n\n// 4. \"Parseamos\" el texto para convertirlo en un objeto de JavaScript.\n// Usamos un bloque try...catch como buena práctica por si el JSON viniera mal formado.\ntry {\n  const parsedData = JSON.parse(cleanedString);\n  \n  // 5. Añadimos el objeto ya parseado a la salida del nodo en un nuevo campo\n  // llamado 'parsed_data' para usarlo en los siguientes pasos.\n  item.json.parsed_data = parsedData;\n\n} catch (error) {\n  // Si hay un error al parsear, lo registramos para poder depurarlo fácilmente.\n  item.json.error_parsing = `Error al parsear JSON: ${error.message}`;\n}\n\n// 6. Devolvemos el item modificado para que el siguiente nodo pueda usarlo.\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        -240
+      ],
+      "id": "fde44672-735c-400b-a361-7d8cb6e7ec74",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Numero_Session": "={{ $('Leer info de usuario1').item.json.Numero_Session }}",
+            "dias_reposo": "={{ $json.parsed_data.datos_extraidos.dias_reposo }}",
+            "diagnostico": "={{ $json.parsed_data.datos_extraidos.diagnostico }}",
+            "fecha_emision_certificado": "={{ $json.parsed_data.datos_extraidos.fecha_emision }}",
+            "obra_social": "={{ $json.parsed_data.datos_extraidos.obra_social_paciente }}",
+            "nombre_medico": "={{ $json.parsed_data.datos_extraidos.nombre_medico }}",
+            "matricula_medico": "={{ $json.parsed_data.datos_extraidos.matricula_medico }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_convertida",
+              "displayName": "fecha_convertida",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hora_convertida",
+              "displayName": "Hora_convertida",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sector",
+              "displayName": "Sector",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "diagnostico",
+              "displayName": "diagnostico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dias_reposo",
+              "displayName": "dias_reposo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_emision_certificado",
+              "displayName": "fecha_emision_certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "obra_social",
+              "displayName": "obra_social",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre_medico",
+              "displayName": "nombre_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "matricula_medico",
+              "displayName": "matricula_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c9df0143-9944-42d4-87c5-76af2834f8a0",
+      "name": "Guardar info Certificado",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        3100,
+        -240
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3bea9bd0-3891-4ded-9de1-0ec6527116e1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d865aff0-2a39-4f40-bd4d-37d5056d76c1",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "imagen"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "54f03816-7b8f-4e8c-b85c-0789ea240ebb",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/vnd.google-apps.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "docx"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": 2,
+          "allMatchingOutputs": false
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        600,
+        0
+      ],
+      "id": "d639dcfe-a894-49f6-b156-27a4c95ef798",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1860,
+        -40
+      ],
+      "id": "420181cc-9843-4d48-b05c-ea2797deffc2",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "yOYXFvciaEeTrKrj",
+          "name": "OpenAi Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## ROL Y OBJETIVO\nEres un asistente experto de RRHH. Tu única función es analizar el siguiente texto, que fue extraído de un certificado médico, y estructurar la información clave en un JSON.\n\n## CONTEXTO DEL EMPLEADO\n- Nombre Registrado: {{ $('Leer info de usuario1').item.json.nombre_completo }}\n- Legajo: {{ $('Leer info de usuario1').item.json['legajo enviado'] }}\n\n## TEXTO EXTRAÍDO DEL CERTIFICADO\n{{ $json.content }}\n\n## TAREA\nDel \"TEXTO EXTRAÍDO\", encuentra y devuelve un JSON con la siguiente estructura:\n{\n  \"datos_extraidos\": {\n    \"nombre_paciente\": \"...\",\n    \"dias_reposo\": 0,\n    ...etc\n  },\n  \"validacion\": { ... }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        2040,
+        -40
+      ],
+      "id": "557b2f5b-b5d2-41c9-ac1e-92276263efff",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-04-17",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2040,
+        120
+      ],
+      "id": "a90eb2fc-4835-4e36-984e-61f604956501",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "AeC0JLKPkafL1bSx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "notes": "Eres un asistente experto de RRHH para la empresa Tecnomil, especializado en la verificación de certificados médicos. Tu tarea es analizar la imagen de un certificado que te proporcionaré y extraer información específica de manera precisa.\n"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Tomamos el item que entra al nodo (la salida del nodo anterior).\nconst item = items[0];\n\n// 2. Accedemos al texto que contiene el string JSON (la salida de la IA).\nconst jsonString = item.json.text;\n\n// 3. LIMPIEZA: A veces la IA devuelve el JSON dentro de un bloque de código.\n// Esta línea elimina los ```json y ``` del principio y del final, si existen.\n// También quita espacios en blanco al inicio y al final con .trim().\nconst cleanedString = jsonString.replace(/^```json\\n/, '').replace(/\\n```$/, '').trim();\n\n// 4. \"Parseamos\" el texto para convertirlo en un objeto de JavaScript.\n// Usamos un bloque try...catch como buena práctica por si el JSON viniera mal formado.\ntry {\n  const parsedData = JSON.parse(cleanedString);\n  \n  // 5. Añadimos el objeto ya parseado a la salida del nodo en un nuevo campo\n  // llamado 'parsed_data' para usarlo en los siguientes pasos.\n  item.json.parsed_data = parsedData;\n\n} catch (error) {\n  // Si hay un error al parsear, lo registramos para poder depurarlo fácilmente.\n  item.json.error_parsing = `Error al parsear JSON: ${error.message}`;\n}\n\n// 6. Devolvemos el item modificado para que el siguiente nodo pueda usarlo.\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        -40
+      ],
+      "id": "4cad3206-21fc-46a4-a333-3905b027b1d1",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20",
+          "mode": "list",
+          "cachedResultName": "Chatbot with session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2002440872,
+          "mode": "list",
+          "cachedResultName": "Inasistencias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TTBchw8rmSAQ-6d05BcvgRYae6qfbDT6YmKBy6c1t20/edit#gid=2002440872"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Numero_Session": "={{ $('Leer info de usuario1').item.json.Numero_Session }}",
+            "dias_reposo": "={{ $json.parsed_data.datos_extraidos.dias_reposo }}",
+            "diagnostico": "={{ $json.parsed_data.datos_extraidos.diagnostico }}",
+            "fecha_emision_certificado": "={{ $json.parsed_data.datos_extraidos.fecha_emision }}",
+            "obra_social": "={{ $json.parsed_data.datos_extraidos.obra_social_paciente }}",
+            "nombre_medico": "={{ $json.parsed_data.datos_extraidos.nombre_medico }}",
+            "matricula_medico": "={{ $json.parsed_data.datos_extraidos.matricula_medico }}"
+          },
+          "matchingColumns": [
+            "Numero_Session"
+          ],
+          "schema": [
+            {
+              "id": "Numero_Session",
+              "displayName": "Numero_Session",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_first_name",
+              "displayName": "telegram_first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_last_name",
+              "displayName": "telegram_last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_language",
+              "displayName": "telegram_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre_completo",
+              "displayName": "nombre_completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo ",
+              "displayName": "motivo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "legajo enviado",
+              "displayName": "legajo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Legajo confirmado",
+              "displayName": "Legajo confirmado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certificado",
+              "displayName": "certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notificado_a_rrhh",
+              "displayName": "notificado_a_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_convertida",
+              "displayName": "fecha_convertida",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hora_convertida",
+              "displayName": "Hora_convertida",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sector",
+              "displayName": "Sector",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "diagnostico",
+              "displayName": "diagnostico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dias_reposo",
+              "displayName": "dias_reposo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_emision_certificado",
+              "displayName": "fecha_emision_certificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "obra_social",
+              "displayName": "obra_social",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre_medico",
+              "displayName": "nombre_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "matricula_medico",
+              "displayName": "matricula_medico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "20e67456-25e0-409d-9c5b-8c88f808d8cc",
+      "name": "Guardar info Certificado1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2660,
+        -40
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79i5csJ9w7rRdZUb",
+          "name": "Google Sheets account (Gaston)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://v2.convertapi.com/convert/docx/to/pdf",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "convertApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $('Google Drive Trigger').item.json.webContentLink }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -140,
+        -340
+      ],
+      "id": "59cce4ac-1202-4296-a06c-ac9a18aa8343",
+      "name": "HTTP Request1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pAMpRsUdEWR63D2A",
+          "name": "Google Drive account"
+        },
+        "convertApi": {
+          "id": "bDMCwRBAWMMmgZXb",
+          "name": "ConvertAPI account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $('HTTP Request1').item.json.id }}/export?mimeType=text/plain",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        40,
+        -340
+      ],
+      "id": "dc9f8d5e-d829-4127-b600-2e259a112c84",
+      "name": "HTTP Request2",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pAMpRsUdEWR63D2A",
+          "name": "Google Drive account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://v2.convertapi.com/convert/docx/to/pdf",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "convertApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $binary.data }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        60
+      ],
+      "id": "8341e614-0290-43a2-a0cd-8c46a18d14c7",
+      "name": "HTTP Request3",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pAMpRsUdEWR63D2A",
+          "name": "Google Drive account"
+        },
+        "convertApi": {
+          "id": "bDMCwRBAWMMmgZXb",
+          "name": "ConvertAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Google Drive Trigger').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        820,
+        120
+      ],
+      "id": "7941dce2-3559-471b-b054-e68983c21298",
+      "name": "Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pAMpRsUdEWR63D2A",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Leer info de usuario1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer info de usuario1": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Guardar info Certificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Guardar info Certificado1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "46884e5a-964d-4809-9160-505212f740c5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c96ff4fa3ca113aca48c7ed6f6dc789abb40e93c01f8cf5a39c8fec44f01ed07"
+  },
+  "id": "KyYIFCaP76GhvdN9",
+  "tags": []
+}
