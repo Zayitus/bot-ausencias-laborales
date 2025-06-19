@@ -1,5 +1,0 @@
-[stage]
-stage1 ansible_host=YOUR_VPS_IP ansible_user=root ansible_python_interpreter=/usr/bin/python3
-
-[prod]
-prod1 ansible_host=YOUR_VPS_IP ansible_user=root ansible_python_interpreter=/usr/bin/python3

@@ -1,2 +1,0 @@
-- name: docker login
-  shell: "echo {{ DOCKER_PASSWORD }} | docker login -u {{ DOCKER_USER }} {{ DOCKER_REGISTRY }} --password-stdin"
